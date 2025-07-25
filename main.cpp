@@ -106,10 +106,47 @@ public:
           qty_{qty}
     {
     }
-}
 
-int
-main()
+    OrderId GetOrderId() const { return orderId_; }
+    Side GetSide() const { return side_; }
+    Price GetPrice() const { return price_; }
+    Qty GetQty() const { return qty_; }
+
+    OrderPointer ToOrderPointer(OrderType type) const
+    {
+        return std::make_shared<Order>(type, GetOrderId(), GetSide(), GetPrice(), GetQty());
+    }
+
+private:
+    OrderId orderId_;
+    Price price_;
+    Side side_;
+    Qty qty_;
+};
+
+struct TradeInfo
+{
+    OrderId orderId_;
+    Price price_;
+    Qty qty_;
+};
+
+class Trade
+{
+public:
+    Trade(const TradeInfo &bidTrade, const TradeInfo &askTrade)
+        : bidTrade_{bidTrade}, askTrade_{askTrade} {}
+    const TradeInfo &GetBidTrade() const { return bidTrade_; }
+    const TradeInfo &GetAskTrade() const { return askTrade_; }
+
+private:
+    TradeInfo bidTrade_;
+    TradeInfo askTrade_;
+};
+
+using Trades = std::vector<Trade>;
+
+int main()
 {
     return 0;
 }
