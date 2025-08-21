@@ -171,7 +171,7 @@ class OrderBook {
                 }
 
                 if (ask->IsFilled()) {
-                    asks.pop_back();
+                    asks.pop_front();
                     orders_.erase(ask->GetOrderId());
                 }
 
@@ -186,17 +186,17 @@ class OrderBook {
             };
         }
 
-        if (!bids_.empty()) {
-            auto &[_, bids] = *bids_.begin();
-            auto &order = bids.front();
-            if (order->GetOrderType() == OrderType::FillAndKill) CancelOrder(order->GetOrderId());
-        }
+        // if (!bids_.empty()) {
+        //     auto &[_, bids] = *bids_.begin();
+        //     auto &order = bids.front();
+        //     if (order->GetOrderType() == OrderType::FillAndKill) CancelOrder(order->GetOrderId());
+        // }
 
-        if (!bids_.empty()) {
-            auto &[_, asks] = *asks_.begin();
-            auto &order = asks.front();
-            if (order->GetOrderType() == OrderType::FillAndKill) CancelOrder(order->GetOrderId());
-        }
+        // if (!asks_.empty()) {
+        //     auto &[_, asks] = *asks_.begin();
+        //     auto &order = asks.front();
+        //     if (order->GetOrderType() == OrderType::FillAndKill) CancelOrder(order->GetOrderId());
+        // }
 
         return trades;
     };
@@ -209,12 +209,10 @@ class OrderBook {
         OrderPointers::iterator iterator;
         if (order->GetSide() == Side::Buy) {
             auto &orders = bids_[order->GetPrice()];
-            orders.push_back(order);
-            iterator = std::next(orders.begin(), orders.size() - 1);
+            iterator = orders.insert(orders.end(), order);
         } else {
             auto &orders = asks_[order->GetPrice()];
-            orders.push_back(order);
-            iterator = std::next(orders.begin(), orders.size() - 1);
+            iterator = orders.insert(orders.end(), order);
         }
 
         orders_.insert({order->GetOrderId(), OrderEntry{order, iterator}});
@@ -224,19 +222,23 @@ class OrderBook {
     void CancelOrder(OrderId orderId) {
         if (!orders_.contains(orderId)) return;
 
-        const auto &[order, iterator] = orders_.at(orderId);
+        const auto entry = orders_.at(orderId);
         orders_.erase(orderId);
+        const auto& order = entry.order_;
+        const auto iterator = entry.location_;
 
         if (order->GetSide() == Side::Sell) {
-            auto price = order->GetPrice();
-            auto &orders = asks_.at(price);
-            orders.erase(iterator);
-            if (orders.empty()) asks_.erase(price);
+            if (auto it = asks_.find(order->GetPrice()); it != asks_.end()) {
+                auto &orders = it->second;
+                orders.erase(iterator);
+                if (orders.empty()) asks_.erase(it);
+            }
         } else {
-            auto price = order->GetPrice();
-            auto &orders = bids_.at(price);
-            orders.erase(iterator);
-            if (orders.empty()) bids_.erase(price);
+            if (auto it = bids_.find(order->GetPrice()); it != bids_.end()) {
+                auto &orders = it->second;
+                orders.erase(iterator);
+                if (orders.empty()) bids_.erase(it);
+            }
         }
     };
 
