@@ -1,11 +1,12 @@
 #pragma once
 
-#include "Using.h"
+#include "Constants.h"
 #include "OrderType.h"
 #include "Side.h"
+#include "Using.h"
 
-#include <format>
 #include <exception>
+#include <format>
 #include <list>
 
 class Order {
@@ -22,6 +23,8 @@ class Order {
         : orderType_{orderType}, orderId_{orderId}, side_{side}, price_{price}, initialQty_{qty}, remainingQty_{qty} {
         if (qty == 0) throw std::invalid_argument("Quantity must be positive");
     }
+
+    Order(OrderId orderId, Side side, Qty qty) : Order(OrderType::Market, orderId, side, Constants::InvalidPrice, qty) {}
 
     OrderId GetOrderId() const { return orderId_; }
     Side GetSide() const { return side_; }
