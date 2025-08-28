@@ -177,16 +177,21 @@ Trades OrderBook::MatchOrders() { // same bid/ask price
                 orders_.erase(ask->GetOrderId());
             }
 
-            if (bids.empty()) bids_.erase(bidPrice);
-
-            if (asks.empty()) asks_.erase(askPrice);
-
             trades.push_back(Trade{TradeInfo{bid->GetOrderId(), bid->GetPrice(), qty},
                                    TradeInfo{ask->GetOrderId(), ask->GetPrice(), qty}});
 
             OnOrderMatched(bid->GetPrice(), qty, bid->IsFilled());
             OnOrderMatched(ask->GetPrice(), qty, ask->IsFilled());
         };
+
+        if (bids.empty()) {
+            bids_.erase(bidPrice);
+            data_.erase(bidPrice);
+        }
+        if (asks.empty()) {
+            asks_.erase(askPrice);
+            data_.erase(askPrice);
+        }
     }
 
     return trades;
@@ -220,9 +225,6 @@ Trades OrderBook::AddOrder(OrderPointer order) {
     if (order->GetOrderType() == OrderType::FillAndKill &&
         !CanFullyFill(order->GetSide(), order->GetPrice(), order->GetInitialQty()))
         return {};
-
-    if (orders_.contains(order->GetOrderId())) return {};                                                             //
-    if (order->GetOrderType() == OrderType::FillAndKill && !CanMatch(order->GetSide(), order->GetPrice())) return {}; //
 
     OrderPointers::iterator iterator;
 
