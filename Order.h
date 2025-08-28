@@ -5,6 +5,7 @@
 #include "Side.h"
 #include "Using.h"
 
+#include <cmath>
 #include <exception>
 #include <format>
 #include <list>
@@ -38,6 +39,14 @@ class Order {
         if (qty > GetRemainingQty())
             throw std::logic_error(std::format("Order({}) cannot be filled for more than its remaining qty.", GetOrderId()));
         remainingQty_ -= qty;
+    }
+    void ToGoodTillCancel(Price price) {
+        if (GetOrderType() != OrderType::Market)
+            throw std::logic_error(
+                std::format("Order ({}) cannot have its price adjusted, only market orders can.", GetOrderId()));
+
+        price_ = price;
+        orderType_ = OrderType::GoodTillCancel;
     }
 };
 
